@@ -191,6 +191,14 @@
             transform: none;
         }
 
+        .btn.connected {
+            background: linear-gradient(45deg, #2ed573, #7bed9f);
+        }
+
+        .btn.disconnected {
+            background: linear-gradient(45deg, #ff4757, #ff6b7a);
+        }
+
         .auto-refresh {
             display: flex;
             align-items: center;
@@ -344,6 +352,12 @@
         </div>
 
         <div class="controls">
+            <button class="btn" id="connectBtn" onclick="connectToAPI()">
+                <span id="connectText">🔌 Connect</span>
+            </button>
+            <button class="btn" id="disconnectBtn" onclick="disconnectFromAPI()" disabled>
+                <span id="disconnectText">🔌 Disconnect</span>
+            </button>
             <button class="btn" id="refreshBtn" onclick="fetchData()">
                 <span id="refreshText">🔄 Refresh Data</span>
             </button>
@@ -381,6 +395,7 @@
 
         let autoRefreshInterval = null;
         let lastData = {};
+        let isConnected = false;
 
         // DOM elements
         const elements = {
@@ -388,6 +403,10 @@
             connectionStatus: document.getElementById('connectionStatus'),
             lastUpdate: document.getElementById('lastUpdate'),
             errorMessage: document.getElementById('errorMessage'),
+            connectBtn: document.getElementById('connectBtn'),
+            connectText: document.getElementById('connectText'),
+            disconnectBtn: document.getElementById('disconnectBtn'),
+            disconnectText: document.getElementById('disconnectText'),
             refreshBtn: document.getElementById('refreshBtn'),
             refreshText: document.getElementById('refreshText'),
             autoRefresh: document.getElementById('autoRefresh')
@@ -395,9 +414,81 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            fetchData();
-            fetchChannelStatus();
+            updateConnectionButtons();
+            // Don't auto-connect on load, let user choose
         });
+
+        // Connect to API
+        async function connectToAPI() {
+            try {
+                showLoading(true);
+                hideError();
+                
+                // Test connection first
+                const testUrl = `${API_ENDPOINTS.feeds}&results=1`;
+                const response = await fetch(testUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Connection failed: ${response.status}`);
+                }
+                
+                // If successful, start fetching data
+                await fetchData();
+                isConnected = true;
+                updateConnectionStatus(true);
+                updateConnectionButtons();
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError(`Connection failed: ${error.message}`);
+                updateConnectionStatus(false);
+                updateConnectionButtons();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Disconnect from API
+        function disconnectFromAPI() {
+            isConnected = false;
+            updateConnectionStatus(false);
+            updateConnectionButtons();
+            
+            // Stop auto-refresh
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                elements.autoRefresh.checked = false;
+            }
+            
+            // Clear data
+            clearData();
+            
+            // Show disconnected message
+            elements.connectionStatus.textContent = 'Disconnected';
+            elements.lastUpdate.textContent = 'Last updated: Disconnected';
+        }
+
+        // Update connection button states
+        function updateConnectionButtons() {
+            if (isConnected) {
+                elements.connectBtn.disabled = true;
+                elements.connectBtn.className = 'btn connected';
+                elements.connectText.textContent = '🔌 Connected';
+                elements.disconnectBtn.disabled = false;
+                elements.disconnectBtn.className = 'btn';
+                elements.disconnectText.textContent = '🔌 Disconnect';
+                elements.refreshBtn.disabled = false;
+            } else {
+                elements.connectBtn.disabled = false;
+                elements.connectBtn.className = 'btn';
+                elements.connectText.textContent = '🔌 Connect';
+                elements.disconnectBtn.disabled = true;
+                elements.disconnectBtn.className = 'btn disconnected';
+                elements.disconnectText.textContent = '🔌 Disconnected';
+                elements.refreshBtn.disabled = true;
+            }
+        }
 
         // Fetch channel status information
         async function fetchChannelStatus() {
@@ -415,6 +506,11 @@
 
         // Fetch data from ThingSpeak API
         async function fetchData() {
+            if (!isConnected) {
+                showError('Please connect to the API first');
+                return;
+            }
+            
             try {
                 showLoading(true);
                 hideError();
@@ -594,6 +690,12 @@
 
         // Toggle auto-refresh
         function toggleAutoRefresh() {
+            if (!isConnected) {
+                elements.autoRefresh.checked = false;
+                showError('Please connect to the API first');
+                return;
+            }
+            
             if (elements.autoRefresh.checked) {
                 autoRefreshInterval = setInterval(fetchData, 30000); // 30 seconds
             } else {
