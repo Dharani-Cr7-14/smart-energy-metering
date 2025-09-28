@@ -439,7 +439,7 @@
             
             <div class="auto-refresh">
                 <input type="checkbox" id="autoRefresh" class="checkbox" onchange="toggleAutoRefresh()">
-                <label for="autoRefresh">Auto-refresh every 30 seconds</label>
+                <label for="autoRefresh">Auto-refresh every 5 seconds</label>
             </div>
         </div>
     </div>
@@ -498,15 +498,7 @@
                 showLoading(true);
                 hideError();
                 
-                // Test connection first
-                const testUrl = `${API_ENDPOINTS.feeds}&results=1`;
-                const response = await fetch(testUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Connection failed: ${response.status}`);
-                }
-                
-                // If successful, start fetching data
+                // Start fetching data immediately
                 await fetchData();
                 isConnected = true;
                 updateConnectionStatus(true);
@@ -586,11 +578,6 @@
 
         // Fetch data from ThingSpeak API
         async function fetchData() {
-            if (!isConnected) {
-                showError('Please connect to the API first');
-                return;
-            }
-            
             try {
                 showLoading(true);
                 hideError();
@@ -776,7 +763,7 @@
             }
             
             if (elements.autoRefresh.checked) {
-                autoRefreshInterval = setInterval(fetchData, 30000); // 30 seconds
+                autoRefreshInterval = setInterval(fetchData, 5000); // 5 seconds
             } else {
                 if (autoRefreshInterval) {
                     clearInterval(autoRefreshInterval);
