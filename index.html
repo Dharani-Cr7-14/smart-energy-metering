@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Energy Metering System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #2ed573;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .last-update {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .voltage { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
+        .current { background: linear-gradient(45deg, #4834d4, #686de0); }
+        .power { background: linear-gradient(45deg, #00d2d3, #54a0ff); }
+        .energy { background: linear-gradient(45deg, #ff9ff3, #f368e0); }
+        .power-factor { background: linear-gradient(45deg, #feca57, #ff9ff3); }
+        .temperature { background: linear-gradient(45deg, #ff6348, #ff4757); }
+
+        .metric-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-unit {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .trend-up { color: #27ae60; }
+        .trend-down { color: #e74c3c; }
+        .trend-stable { color: #95a5a6; }
+
+        .controls {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .error-message {
+            background: #ff4757;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Smart Energy Metering System</h1>
+            <p>Real-time monitoring of electrical parameters</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="connection-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="connectionStatus">Connecting...</span>
+            </div>
+            <div class="last-update" id="lastUpdate">Last updated: Never</div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon voltage">⚡</div>
+                    <div class="metric-title">Voltage</div>
+                </div>
+                <div class="metric-value" id="voltage">--</div>
+                <div class="metric-unit">Volts (V)</div>
+                <div class="metric-trend" id="voltageTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon current">🔌</div>
+                    <div class="metric-title">Current</div>
+                </div>
+                <div class="metric-value" id="current">--</div>
+                <div class="metric-unit">Amperes (A)</div>
+                <div class="metric-trend" id="currentTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon power">⚡</div>
+                    <div class="metric-title">Power</div>
+                </div>
+                <div class="metric-value" id="power">--</div>
+                <div class="metric-unit">Watts (W)</div>
+                <div class="metric-trend" id="powerTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon energy">🔋</div>
+                    <div class="metric-title">Energy</div>
+                </div>
+                <div class="metric-value" id="energy">--</div>
+                <div class="metric-unit">kWh</div>
+                <div class="metric-trend" id="energyTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon power-factor">📐</div>
+                    <div class="metric-title">Power Factor</div>
+                </div>
+                <div class="metric-value" id="powerFactor">--</div>
+                <div class="metric-unit">PF</div>
+                <div class="metric-trend" id="powerFactorTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon temperature">🌡️</div>
+                    <div class="metric-title">Temperature</div>
+                </div>
+                <div class="metric-value" id="temperature">--</div>
+                <div class="metric-unit">°C</div>
+                <div class="metric-trend" id="temperatureTrend">
+                    <span>📊</span>
+                    <span>No data</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="refreshBtn" onclick="fetchData()">
+                <span id="refreshText">🔄 Refresh Data</span>
+            </button>
+            <button class="btn" id="clearBtn" onclick="clearData()">🗑️ Clear Data</button>
+            
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" class="checkbox" onchange="toggleAutoRefresh()">
+                <label for="autoRefresh">Auto-refresh every 30 seconds</label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_KEY = 'ERJPEKKABCS31VYU';
+        const CHANNEL_ID = '3093144';
+        const API_BASE_URL = 'https://api.thingspeak.com/channels';
+        
+        // API endpoints based on the image
+        const API_ENDPOINTS = {
+            feeds: `${API_BASE_URL}/${CHANNEL_ID}/feeds.json?api_key=${API_KEY}`,
+            status: `${API_BASE_URL}/${CHANNEL_ID}/status.json?api_key=${API_KEY}`,
+            field: (fieldNum) => `${API_BASE_URL}/${CHANNEL_ID}/fields/${fieldNum}.json?api_key=${API_KEY}`
+        };
+        
+        // Field mappings (adjust based on your ThingSpeak channel configuration)
+        const FIELD_MAPPING = {
+            voltage: 1,      // Field 1 - Voltage
+            current: 2,      // Field 2 - Current
+            power: 3,        // Field 3 - Power
+            energy: 4,       // Field 4 - Energy
+            powerFactor: 5,  // Field 5 - Power Factor
+            temperature: 6   // Field 6 - Temperature
+        };
+
+        let autoRefreshInterval = null;
+        let lastData = {};
+
+        // DOM elements
+        const elements = {
+            statusIndicator: document.getElementById('statusIndicator'),
+            connectionStatus: document.getElementById('connectionStatus'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            errorMessage: document.getElementById('errorMessage'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            refreshText: document.getElementById('refreshText'),
+            autoRefresh: document.getElementById('autoRefresh')
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchData();
+            fetchChannelStatus();
+        });
+
+        // Fetch channel status information
+        async function fetchChannelStatus() {
+            try {
+                const response = await fetch(API_ENDPOINTS.status);
+                if (response.ok) {
+                    const statusData = await response.json();
+                    console.log('Channel Status:', statusData);
+                    // You can use this data to show additional channel information
+                }
+            } catch (error) {
+                console.log('Could not fetch channel status:', error);
+            }
+        }
+
+        // Fetch data from ThingSpeak API
+        async function fetchData() {
+            try {
+                showLoading(true);
+                hideError();
+                
+                // First, try to get the complete channel feed (all fields at once)
+                const feedUrl = `${API_ENDPOINTS.feeds}&results=1`;
+                const feedResponse = await fetch(feedUrl);
+                
+                if (!feedResponse.ok) {
+                    throw new Error(`HTTP error! status: ${feedResponse.status}`);
+                }
+                
+                const feedData = await feedResponse.json();
+                
+                // Process the complete feed data
+                if (feedData.feeds && feedData.feeds.length > 0) {
+                    const latestFeed = feedData.feeds[0];
+                    
+                    // Update all metrics from the single feed
+                    Object.entries(FIELD_MAPPING).forEach(([metric, field]) => {
+                        const value = latestFeed[`field${field}`];
+                        if (value !== null && value !== undefined && value !== '') {
+                            updateMetric(metric, parseFloat(value));
+                        }
+                    });
+                    
+                    updateConnectionStatus(true);
+                    updateLastUpdateTime();
+                } else {
+                    // Fallback: try individual field requests if no feed data
+                    await fetchIndividualFields();
+                }
+                
+            } catch (error) {
+                console.error('Error fetching feed data:', error);
+                // Fallback to individual field requests
+                try {
+                    await fetchIndividualFields();
+                } catch (fallbackError) {
+                    console.error('Error fetching individual fields:', fallbackError);
+                    showError(`Failed to fetch data: ${fallbackError.message}`);
+                    updateConnectionStatus(false);
+                }
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Fallback method to fetch individual fields
+        async function fetchIndividualFields() {
+            const promises = Object.entries(FIELD_MAPPING).map(async ([metric, field]) => {
+                const url = `${API_ENDPOINTS.field(field)}&results=1`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return { metric, data };
+            });
+
+            const results = await Promise.all(promises);
+            
+            // Process and display data
+            results.forEach(({ metric, data }) => {
+                if (data.feeds && data.feeds.length > 0) {
+                    const latestFeed = data.feeds[0];
+                    const value = latestFeed[`field${FIELD_MAPPING[metric]}`];
+                    
+                    if (value !== null && value !== undefined && value !== '') {
+                        updateMetric(metric, parseFloat(value));
+                    }
+                }
+            });
+
+            updateConnectionStatus(true);
+            updateLastUpdateTime();
+        }
+
+        // Update metric display
+        function updateMetric(metric, value) {
+            const element = document.getElementById(metric);
+            const trendElement = document.getElementById(`${metric}Trend`);
+            
+            if (element && !isNaN(value)) {
+                // Format value based on metric type
+                let formattedValue = value;
+                if (metric === 'energy') {
+                    formattedValue = value.toFixed(2);
+                } else if (metric === 'powerFactor') {
+                    formattedValue = value.toFixed(3);
+                } else if (metric === 'temperature') {
+                    formattedValue = value.toFixed(1);
+                } else {
+                    formattedValue = value.toFixed(2);
+                }
+                
+                element.textContent = formattedValue;
+                
+                // Update trend indicator
+                if (lastData[metric] !== undefined) {
+                    const trend = value - lastData[metric];
+                    updateTrend(trendElement, trend);
+                }
+                
+                lastData[metric] = value;
+            }
+        }
+
+        // Update trend indicator
+        function updateTrend(trendElement, trend) {
+            const trendSpan = trendElement.querySelector('span:last-child');
+            if (Math.abs(trend) < 0.01) {
+                trendSpan.textContent = 'Stable';
+                trendSpan.className = 'trend-stable';
+            } else if (trend > 0) {
+                trendSpan.textContent = `↗ +${trend.toFixed(2)}`;
+                trendSpan.className = 'trend-up';
+            } else {
+                trendSpan.textContent = `↘ ${trend.toFixed(2)}`;
+                trendSpan.className = 'trend-down';
+            }
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            elements.statusIndicator.className = `status-indicator ${connected ? 'connected' : ''}`;
+            elements.connectionStatus.textContent = connected ? 'Connected' : 'Disconnected';
+        }
+
+        // Update last update time
+        function updateLastUpdateTime() {
+            const now = new Date();
+            elements.lastUpdate.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        // Show/hide loading state
+        function showLoading(loading) {
+            if (loading) {
+                elements.refreshText.innerHTML = '<span class="loading"></span> Loading...';
+                elements.refreshBtn.disabled = true;
+            } else {
+                elements.refreshText.textContent = '🔄 Refresh Data';
+                elements.refreshBtn.disabled = false;
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            elements.errorMessage.style.display = 'none';
+        }
+
+        // Clear all data
+        function clearData() {
+            Object.keys(FIELD_MAPPING).forEach(metric => {
+                const element = document.getElementById(metric);
+                const trendElement = document.getElementById(`${metric}Trend`);
+                
+                if (element) element.textContent = '--';
+                if (trendElement) {
+                    const trendSpan = trendElement.querySelector('span:last-child');
+                    trendSpan.textContent = 'No data';
+                    trendSpan.className = '';
+                }
+            });
+            
+            lastData = {};
+            updateLastUpdateTime();
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            if (elements.autoRefresh.checked) {
+                autoRefreshInterval = setInterval(fetchData, 30000); // 30 seconds
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            } else if (elements.autoRefresh.checked) {
+                toggleAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
