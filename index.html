@@ -512,6 +512,10 @@
                 updateConnectionStatus(true);
                 updateConnectionButtons();
                 
+                // Auto-enable auto-refresh when connected
+                elements.autoRefresh.checked = true;
+                toggleAutoRefresh();
+                
             } catch (error) {
                 console.error('Connection error:', error);
                 showError(`Connection failed: ${error.message}`);
@@ -532,8 +536,10 @@
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
-                elements.autoRefresh.checked = false;
             }
+            
+            // Keep auto-refresh checkbox checked for next connection
+            // elements.autoRefresh.checked = false; // Removed this line
             
             // Clear data
             clearData();
@@ -765,8 +771,7 @@
         // Toggle auto-refresh
         function toggleAutoRefresh() {
             if (!isConnected) {
-                elements.autoRefresh.checked = false;
-                showError('Please connect to the API first');
+                // Don't show error, just keep the checkbox state for when user connects
                 return;
             }
             
@@ -787,7 +792,7 @@
                     clearInterval(autoRefreshInterval);
                     autoRefreshInterval = null;
                 }
-            } else if (elements.autoRefresh.checked) {
+            } else if (elements.autoRefresh.checked && isConnected) {
                 toggleAutoRefresh();
             }
         });
