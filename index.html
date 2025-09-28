@@ -40,6 +40,18 @@
             opacity: 0.9;
         }
 
+        .connection-controls {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
         .status-bar {
             background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
@@ -178,6 +190,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin: 0 10px;
+            min-height: 44px;
+            min-width: 120px;
+            touch-action: manipulation;
         }
 
         .btn:hover {
@@ -242,6 +257,19 @@
                 font-size: 2rem;
             }
             
+            .connection-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .connection-controls .btn {
+                width: 100%;
+                max-width: 200px;
+                padding: 15px 20px;
+                font-size: 1.1rem;
+            }
+            
             .grid {
                 grid-template-columns: 1fr;
             }
@@ -250,6 +278,49 @@
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .controls .btn {
+                width: 100%;
+                max-width: 250px;
+                margin: 0;
+            }
+            
+            .auto-refresh {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .connection-controls {
+                padding: 15px;
+            }
+            
+            .metric-card {
+                padding: 20px;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
             }
         }
     </style>
@@ -261,10 +332,19 @@
             <p>Real-time monitoring of electrical parameters</p>
         </div>
 
+        <div class="connection-controls">
+            <button class="btn" id="connectBtn" onclick="connectToAPI()">
+                <span id="connectText">🔌 Connect</span>
+            </button>
+            <button class="btn" id="disconnectBtn" onclick="disconnectFromAPI()" disabled>
+                <span id="disconnectText">🔌 Disconnect</span>
+            </button>
+        </div>
+
         <div class="status-bar">
             <div class="connection-status">
                 <div class="status-indicator" id="statusIndicator"></div>
-                <span id="connectionStatus">Connecting...</span>
+                <span id="connectionStatus">Disconnected</span>
             </div>
             <div class="last-update" id="lastUpdate">Last updated: Never</div>
         </div>
@@ -352,12 +432,6 @@
         </div>
 
         <div class="controls">
-            <button class="btn" id="connectBtn" onclick="connectToAPI()">
-                <span id="connectText">🔌 Connect</span>
-            </button>
-            <button class="btn" id="disconnectBtn" onclick="disconnectFromAPI()" disabled>
-                <span id="disconnectText">🔌 Disconnect</span>
-            </button>
             <button class="btn" id="refreshBtn" onclick="fetchData()">
                 <span id="refreshText">🔄 Refresh Data</span>
             </button>
